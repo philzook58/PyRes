@@ -46,12 +46,13 @@ Email: schulz@eprover.org
 """
 
 import unittest
-from lexer import Lexer
-from substitutions import BTSubst
-from matching import match
-from literals import Literal
-from clauses import Clause, parseClause
-from clausesets import ClauseSet
+from .lexer import Lexer
+from .substitutions import BTSubst
+from .matching import match
+from .literals import Literal
+from .clauses import Clause, parseClause
+from .clausesets import ClauseSet
+
 
 def subsumeLitLists(subsumer, subsumed, subst):
     """
@@ -69,6 +70,7 @@ def subsumeLitLists(subsumer, subsumed, subst):
         subst.backtrackToState(btstate)
     return False
 
+
 def subsumes(subsumer, subsumed):
     """
     Return True if subsumer subsumes subsumed, False otherwise.
@@ -79,6 +81,7 @@ def subsumes(subsumer, subsumed):
     subsumer_list = subsumer.literals
     subsumed_list = subsumed.literals
     return subsumeLitLists(subsumer_list, subsumed_list, subst)
+
 
 def forwardSubsumption(set, clause):
     """
@@ -111,6 +114,7 @@ class TestResolution(unittest.TestCase):
     Unit test class for clauses. Test clause and literal
     functionality.
     """
+
     def setUp(self):
         """
         Setup function for resolution testing
@@ -193,5 +197,5 @@ cnf(axiom, c7, Y=Y).
         self.assertEqual(tmp, 6)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

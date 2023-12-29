@@ -59,32 +59,33 @@ Email: schulz@eprover.org
 """
 
 import unittest
-from lexer import Token,Lexer
-from literals import Literal, parseLiteral, parseLiteralList,\
-     literalList2String
+from .lexer import Token, Lexer
+from .literals import Literal, parseLiteral, parseLiteralList, literalList2String
 
 
 def firstLit(litlist):
     """
     Return the first element of the list (as a sublist).
     """
-    assert(litlist)
+    assert litlist
     return litlist[0:1]
+
 
 def smallestLit(litlist):
     """
     Return the smallest element of the list (as a sublist).
     """
-    assert(litlist)
-    litlist.sort(key=lambda x:x.weight(1,1))
+    assert litlist
+    litlist.sort(key=lambda x: x.weight(1, 1))
     return litlist[0:1]
+
 
 def largestLit(litlist):
     """
     Return the largest element of the list (as a sublist).
     """
-    assert(litlist)
-    litlist.sort(key=lambda x:x.weight(1,1))
+    assert litlist
+    litlist.sort(key=lambda x: x.weight(1, 1))
     return [litlist[-1]]
 
 
@@ -92,14 +93,15 @@ def varSizeEval(lit):
     """
     Return a tuple <number of vars, weight>.
     """
-    return (len(lit.collectVars()), -lit.weight(1,1))
+    return (len(lit.collectVars()), -lit.weight(1, 1))
+
 
 def varSizeLit(litlist):
     """
     Return the largest literal among those with the smallest
     variable list.
     """
-    assert(litlist)
+    assert litlist
     litlist.sort(key=varSizeEval)
     return litlist[0:1]
 
@@ -110,7 +112,7 @@ def eqResVarSizeLit(litlist):
     among those with the smallest variable set if no pure variable
     literal exists.
     """
-    assert(litlist)
+    assert litlist
     for l in litlist:
         if l.isPureVarLit():
             return [l]
@@ -119,26 +121,24 @@ def eqResVarSizeLit(litlist):
     return litlist[0:1]
 
 
-
 LiteralSelectors = {
-    "first" : firstLit,
-    "smallest" : smallestLit,
-    "largest" : largestLit,
-    "leastvars" : varSizeLit,
-    "eqleastvars" : eqResVarSizeLit
-    }
+    "first": firstLit,
+    "smallest": smallestLit,
+    "largest": largestLit,
+    "leastvars": varSizeLit,
+    "eqleastvars": eqResVarSizeLit,
+}
 """
 Table associating name and selection function, so that we can select
 the function by name.
 """
 
 
-
-
 class TestLitSelection(unittest.TestCase):
     """
     Unit test class for literal selection.
     """
+
     def setUp(self):
         """
         Setup function for literal selection.
@@ -193,8 +193,5 @@ class TestLitSelection(unittest.TestCase):
         self.assertEqual(l, l3)
 
 
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
