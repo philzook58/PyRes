@@ -71,13 +71,19 @@ Email: schulz@eprover.org
 
 import unittest
 from collections import deque
-from lexer import Token,Lexer
-from derivations import Derivable,Derivation,flatDerivation,toggleDerivationOutput
-from signature import Signature
-from terms import *
-import substitutions
-from literals import Literal, parseLiteral, parseLiteralList,\
-     literalList2String, litInLitList, oppositeInLitList
+from .lexer import Token, Lexer
+from .derivations import Derivable, Derivation, flatDerivation, toggleDerivationOutput
+from .signature import Signature
+from .terms import *
+from . import substitutions
+from .literals import (
+    Literal,
+    parseLiteral,
+    parseLiteralList,
+    literalList2String,
+    litInLitList,
+    oppositeInLitList,
+)
 
 
 class Formula(object):
@@ -107,7 +113,7 @@ class Formula(object):
         """
         Initialize the formula.
         """
-        self.op     = op
+        self.op = op
         self.child1 = child1
         self.child2 = child2
 
@@ -116,15 +122,22 @@ class Formula(object):
         Return a string representation of the formula.
         """
         if not self.op:
-            res=str(self.child1)
-        elif self.op=="~":
-            res="(~"+repr(self.child1)+")"
+            res = str(self.child1)
+        elif self.op == "~":
+            res = "(~" + repr(self.child1) + ")"
         elif self.op in ["&", "|", "=>", "<=", "<=>", "<~>", "~|", "~&"]:
-            res = "("+repr(self.child1)+self.op+repr(self.child2)+")"
+            res = "(" + repr(self.child1) + self.op + repr(self.child2) + ")"
         else:
             assert self.op in ["!", "?"]
-            res = "("+self.op+"["+term2String(self.child1)+\
-                  "]:"+repr(self.child2)+")"
+            res = (
+                "("
+                + self.op
+                + "["
+                + term2String(self.child1)
+                + "]:"
+                + repr(self.child2)
+                + ")"
+            )
         return res
 
     def isLiteral(self):
@@ -171,8 +184,10 @@ class Formula(object):
         if self.isLiteral():
             return True
         if self.op == "|":
-            return self.child1.isLiteralDisjunction() and \
-                   self.child2.isLiteralDisjunction()
+            return (
+                self.child1.isLiteralDisjunction()
+                and self.child2.isLiteralDisjunction()
+            )
         return False
 
     def isClauseConjunction(self):
@@ -185,8 +200,9 @@ class Formula(object):
         if self.op == "|":
             return self.isLiteralDisjunction()
         if self.op == "&":
-            return self.child1.isClauseConjunction() and \
-                   self.child2.isClauseConjunction()
+            return (
+                self.child1.isClauseConjunction() and self.child2.isClauseConjunction()
+            )
         return False
 
     def isCNF(self):
@@ -213,7 +229,7 @@ class Formula(object):
         Return a list of the subformula connected by top-level "&".
         """
         if self.op == "&":
-            return self.child1.conj2List()+self.child2.conj2List()
+            return self.child1.conj2List() + self.child2.conj2List()
         return [self]
 
     def disj2List(self):
@@ -221,10 +237,8 @@ class Formula(object):
         Return a list of the subformula connected by top-level "|".
         """
         if self.op == "|":
-            return self.child1.disj2List()+self.child2.disj2List()
+            return self.child1.disj2List() + self.child2.disj2List()
         return [self]
-
-
 
     def hasSubform1(self):
         """
@@ -232,7 +246,6 @@ class Formula(object):
         argument. This is false for quantified formulas and literals.
         """
         return self.isUnary() or self.isBinary()
-
 
     def hasSubform2(self):
         """
@@ -242,23 +255,24 @@ class Formula(object):
         """
         return self.isQuantified() or self.isBinary()
 
-
     def isEqual(self, other):
         """
         Return True if self is structurally equal to other.
         """
-        if self.op!=other.op:
+        if self.op != other.op:
             return False
         elif self.isLiteral():
             return self.child1.isEqual(other.child1)
         elif self.isQuantified():
-            return termEqual(self.child1, other.child1) and \
-                   self.child2.isEqual(other.child2)
+            return termEqual(self.child1, other.child1) and self.child2.isEqual(
+                other.child2
+            )
         elif self.isUnary():
             return self.child1.isEqual(other.child1)
         else:
-            return self.child1.isEqual(other.child1) and \
-                   self.child2.isEqual(other.child2)
+            return self.child1.isEqual(other.child1) and self.child2.isEqual(
+                other.child2
+            )
 
     def collectOps(self):
         """
@@ -270,10 +284,10 @@ class Formula(object):
         if self.isLiteral():
             pass
         elif self.isUnary():
-            res|=self.child1.collectOps()
+            res |= self.child1.collectOps()
         elif self.isBinary():
-            res|=self.child1.collectOps()
-            res|=self.child2.collectOps()
+            res |= self.child1.collectOps()
+            res |= self.child2.collectOps()
         else:
             assert self.isQuantified()
             res |= self.child2.collectOps()
@@ -288,16 +302,16 @@ class Formula(object):
         if self.isLiteral():
             self.child1.collectFuns(res)
         elif self.isUnary():
-            res|=self.child1.collectFuns()
+            res |= self.child1.collectFuns()
         elif self.isBinary():
-            res|=self.child1.collectFuns()
-            res|=self.child2.collectFuns()
+            res |= self.child1.collectFuns()
+            res |= self.child2.collectFuns()
         else:
             assert self.isQuantified()
             res |= self.child2.collectFuns()
         return res
 
-    def collectSig(self, sig = None):
+    def collectSig(self, sig=None):
         """
         Return the set of all function and predicate symbols used in
         the formula.
@@ -326,30 +340,29 @@ class Formula(object):
         Return the set of all variables in self.
         """
         if self.isLiteral():
-            res=self.child1.collectVars()
+            res = self.child1.collectVars()
         elif self.isUnary():
-            res=self.child1.collectVars()
+            res = self.child1.collectVars()
         elif self.isBinary():
-            res=self.child1.collectVars()
-            res|=self.child2.collectVars()
+            res = self.child1.collectVars()
+            res |= self.child2.collectVars()
         else:
             assert self.isQuantified()
             res = termCollectVars(self.child1)
             res |= self.child2.collectVars()
         return res
 
-
     def collectFreeVars(self):
         """
         Return the set of all free variables in self.
         """
         if self.isLiteral():
-            res=self.child1.collectVars()
+            res = self.child1.collectVars()
         elif self.isUnary():
-            res=self.child1.collectFreeVars()
+            res = self.child1.collectFreeVars()
         elif self.isBinary():
-            res=self.child1.collectFreeVars()
-            res|=self.child2.collectFreeVars()
+            res = self.child1.collectFreeVars()
+            res |= self.child2.collectFreeVars()
         else:
             # Quantor case. We first collect all free variables in
             # the quantified formula, then remove the one bound by the
@@ -358,8 +371,6 @@ class Formula(object):
             res = self.child2.collectFreeVars()
             res.discard(self.child1)
         return res
-
-
 
 
 def parseQuantified(lexer, quantor):
@@ -425,8 +436,9 @@ def parseFormula(lexer):
     res = parseUnitaryFormula(lexer)
     if lexer.TestTok([Token.Or, Token.And]):
         res = parseAssocFormula(lexer, res)
-    elif lexer.TestTok([Token.Nor, Token.Nand, Token.Equiv,
-                        Token.Xor, Token.Implies, Token.BImplies]):
+    elif lexer.TestTok(
+        [Token.Nor, Token.Nand, Token.Equiv, Token.Xor, Token.Implies, Token.BImplies]
+    ):
         op = lexer.LookLit()
         lexer.Next()
         rest = parseUnitaryFormula(lexer)
@@ -439,27 +451,33 @@ class WFormula(Derivable):
     Datatype for the complete first-order formula, including
     meta-information like type and name.
     """
+
     def __init__(self, formula, type="plain", name=None):
         """
         Constructor, takes formula, type, and optional name.
         """
-        self.formula    = formula
-        self.type       = type
+        self.formula = formula
+        self.type = type
         Derivable.__init__(self, name)
 
     def __repr__(self):
         """
         Return a string representation of the formula.
         """
-        res = "fof(%s,%s,%s%s)."%(self.name, self.type,
-                                   repr(self.formula),self.strDerivation())
+        res = "fof(%s,%s,%s%s)." % (
+            self.name,
+            self.type,
+            repr(self.formula),
+            self.strDerivation(),
+        )
         return res
 
-    def collectSig(self, sig = None):
+    def collectSig(self, sig=None):
         """
         Collect formula signature.
         """
         return self.formula.collectSig(sig)
+
 
 def parseWFormula(lexer):
     """
@@ -473,10 +491,10 @@ def parseWFormula(lexer):
     distinguish "axiom", "conjecture", and "negated_conjecture", and
     map everything else to "plain".
     """
-    lexer.AcceptLit("fof");
+    lexer.AcceptLit("fof")
     lexer.AcceptTok(Token.OpenPar)
     name = lexer.LookLit()
-    lexer.AcceptTok([Token.IdentLower,Token.SQString])
+    lexer.AcceptTok([Token.IdentLower, Token.SQString])
     lexer.AcceptTok(Token.Comma)
     type = lexer.LookLit()
     if not type in ["axiom", "conjecture", "negated_conjecture"]:
@@ -494,6 +512,7 @@ def parseWFormula(lexer):
 
     return res
 
+
 def negateConjecture(wform):
     """
     If wform is a conjecture, return its negation. Otherwise
@@ -503,24 +522,23 @@ def negateConjecture(wform):
     if wform.type == "conjecture":
         negf = Formula("~", wform.formula)
         negw = WFormula(negf, "negated_conjecture")
-        negw.setDerivation(flatDerivation("assume_negation",\
-                                          [wform],\
-                                          "status(cth)"))
+        negw.setDerivation(flatDerivation("assume_negation", [wform], "status(cth)"))
         return negw
     else:
         return wform
-
 
 
 # ------------------------------------------------------------------
 #                  Unit test section
 # ------------------------------------------------------------------
 
+
 class TestFormulas(unittest.TestCase):
     """
     Unit test class for clauses. Test clause and literal
     functionality.
     """
+
     def setUp(self):
         """
         Setup function for clause/literal unit tests. Initialize
@@ -567,8 +585,8 @@ class TestFormulas(unittest.TestCase):
         self.assertEqual(f3.collectFreeVars(), set(["X"]))
 
         self.assertEqual(f1.collectVars(), set(["X"]))
-        self.assertEqual(f2.collectVars(), set(["X","Y"]))
-        self.assertEqual(f3.collectVars(), set(["X","Y"]))
+        self.assertEqual(f2.collectVars(), set(["X", "Y"]))
+        self.assertEqual(f3.collectVars(), set(["X", "Y"]))
 
         self.assertTrue(f1.isQuantified())
         self.assertTrue(not f2.isQuantified())
@@ -600,9 +618,9 @@ class TestFormulas(unittest.TestCase):
         """
         Test if operator and funtion symbol collection works.
         """
-        lex = Lexer("a&(b|~c)    "\
-                    "(a=>b)<=(c<=>?[X]:p(X))"\
-                    "(a~&(b<~>(c=>d)))~|![Y]:e(Y)")
+        lex = Lexer(
+            "a&(b|~c)    " "(a=>b)<=(c<=>?[X]:p(X))" "(a~&(b<~>(c=>d)))~|![Y]:e(Y)"
+        )
         f = parseFormula(lex)
         self.assertEqual(f.collectOps(), set(["", "&", "|", "~"]))
         self.assertEqual(f.collectFuns(), set(["a", "b", "c"]))
@@ -612,21 +630,22 @@ class TestFormulas(unittest.TestCase):
         self.assertEqual(f.collectFuns(), set(["a", "b", "c", "p"]))
 
         f = parseFormula(lex)
-        self.assertEqual(f.collectOps(),
-                         set(["", "~&", "~|", "!", "<~>", "=>"]))
+        self.assertEqual(f.collectOps(), set(["", "~&", "~|", "!", "<~>", "=>"]))
         self.assertEqual(f.collectFuns(), set(["a", "b", "c", "d", "e"]))
 
     def testCNFTest(self):
         """
         Check the CNF test.
         """
-        lex = Lexer("""
+        lex = Lexer(
+            """
         a=>b
         a & (a|(b=>c))
         ![X]:((a|b)&c)
         ![X]:![Y]:((a|b)&(?[X]:c(X)))
         ![X]:(a & (a|b|c) & (a|b|c|d))
-        """)
+        """
+        )
         expected = [False, False, True, False, True]
         while not lex.TestTok(Token.EOFToken):
             f = parseFormula(lex)
@@ -637,14 +656,16 @@ class TestFormulas(unittest.TestCase):
         """
         Test splitting of conjunctions/disjunktions.
         """
-        lex = Lexer("""
+        lex = Lexer(
+            """
         a=>b
         a & (a|(b=>c))
         ![X]:((a|b)&c)
         ![X]:![Y]:((a|b)&(?[X]:c(X)))
         ![X]:(a & (a|b|c) & (a|b|c|d))
         a|(b&c)|(b<=>d)|![X]:p(X)
-        """)
+        """
+        )
         cexpected = [1, 2, 2, 2, 3, 1]
         dexpected = [1, 1, 1, 1, 1, 4]
 
@@ -654,12 +675,11 @@ class TestFormulas(unittest.TestCase):
 
             cs = f.conj2List()
             res = cexpected.pop(0)
-            self.assertEqual(len(cs),res)
+            self.assertEqual(len(cs), res)
 
             ds = f.disj2List()
             res = dexpected.pop(0)
-            self.assertEqual(len(ds),res)
-
+            self.assertEqual(len(ds), res)
 
     def testWrappedFormula(self):
         """
@@ -693,5 +713,6 @@ class TestFormulas(unittest.TestCase):
         sig.isFun("a")
         sig.isConstant("a")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

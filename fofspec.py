@@ -38,13 +38,14 @@ import errno
 import os
 import os.path
 
-from lexer import Lexer, Token
-from signature import Signature
-from clauses import Clause, parseClause
-from clausesets import ClauseSet
-from formulas import WFormula, parseWFormula, negateConjecture
-from formulacnf import wFormulaClausify
-from eqaxioms import generateEquivAxioms, generateCompatAxioms
+from .lexer import Lexer, Token
+from .signature import Signature
+from .clauses import Clause, parseClause
+from .clausesets import ClauseSet
+from .formulas import WFormula, parseWFormula, negateConjecture
+from .formulacnf import wFormulaClausify
+from .eqaxioms import generateEquivAxioms, generateCompatAxioms
+
 
 def tptpLexer(source, refdir):
     """
@@ -63,7 +64,7 @@ def tptpLexer(source, refdir):
         lex = Lexer(fp.read(), name)
         fp.close()
         refdir = os.path.dirname(name)
-    except IOError: # pragma: nocover
+    except IOError:  # pragma: nocover
         tptp = os.getenv("TPTP")
         if tptp:
             name = os.path.join(tptp, source)
@@ -76,7 +77,6 @@ def tptpLexer(source, refdir):
     return lex, refdir
 
 
-
 class FOFSpec(object):
     """
     A datastructure for representing a mixed set of clauses and
@@ -87,20 +87,21 @@ class FOFSpec(object):
         """
         Initialize the specification.
         """
-        self.clauses  = []
+        self.clauses = []
         self.formulas = []
-        self.isFof    = False
-        self.hasConj  = False
+        self.isFof = False
+        self.hasConj = False
 
     def __repr__(self):
         """
         Return a string representation of the spec.
         """
-        res= "\n".join([repr(c) for c in self.clauses]+
-                       [repr(f) for f in self.formulas])
+        res = "\n".join(
+            [repr(c) for c in self.clauses] + [repr(f) for f in self.formulas]
+        )
         return res
 
-    def addClause(self,clause):
+    def addClause(self, clause):
         """
         Add a clause to the specification.
         """
@@ -108,11 +109,11 @@ class FOFSpec(object):
             self.hasConj = True
         self.clauses.append(clause)
 
-    def addFormula(self,formula):
+    def addFormula(self, formula):
         """
         Add a clause to the specification.
         """
-        if formula.type in ["conjecture", "negated_conjecture"] :
+        if formula.type in ["conjecture", "negated_conjecture"]:
             self.hasConj = True
         self.isFof = True
         self.formulas.append(formula)
@@ -181,11 +182,13 @@ class FOFSpec(object):
 #                  Unit test section
 # ------------------------------------------------------------------
 
+
 class TestFormulas(unittest.TestCase):
     """
     Unit test class for clauses. Test clause and literal
     functionality.
     """
+
     def setUp(self):
         """
         Setup function for clause/literal unit tests. Initialize
@@ -260,5 +263,5 @@ class TestFormulas(unittest.TestCase):
         print(spec)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
